@@ -7,6 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from dotenv import load_dotenv
 import os
+import streamlit as st
 # Step 1: Load the PDF
 loader = PyPDFLoader("data/sample.pdf")
 documents = loader.load()
