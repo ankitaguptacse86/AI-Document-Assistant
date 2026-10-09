@@ -56,7 +56,7 @@ else:
         return results
 
     # Test document retrieval
-    question = input("Ask a question about your PDF: ")
+    question = st.text_input("Ask a question about your PDF: ")
     results = retrieve_documents(question)
 
     print("\nRelevant document content:")
@@ -94,5 +94,6 @@ else:
         return response.content
 
     answer = generate_answer(question, results)
+    st.write(answer)
     print("\nGemini Answer:")
     print(answer)
