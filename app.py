@@ -7,7 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from dotenv import load_dotenv
 import os
-import streamlit as st
+
 # Step 1: Load the PDF
 loader = PyPDFLoader("data/sample.pdf")
 documents = loader.load()
@@ -57,7 +57,7 @@ else:
         return results
 
     # Test document retrieval
-    question = st.text_input("Ask a question about your PDF: ")
+    question = input("Ask a question about your PDF: ")
     results = retrieve_documents(question)
 
     print("\nRelevant document content:")
@@ -95,6 +95,5 @@ else:
         return response.content
 
     answer = generate_answer(question, results)
-    st.write(answer)
     print("\nGemini Answer:")
     print(answer)
