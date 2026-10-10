@@ -1,4 +1,5 @@
 import os
+import re
 from typing import TypedDict
 
 from dotenv import load_dotenv
@@ -63,22 +64,41 @@ def load_pdf_chunks(pdf_path="data/sample.pdf"):
 chunks = load_pdf_chunks()
 gemini_quota_exhausted = False
 
+STOP_WORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "by", "can", "did",
+    "do", "does", "for", "from", "give", "has", "have", "i", "in",
+    "is", "it", "me", "of", "on", "or", "please", "show", "tell",
+    "that", "the", "this", "to", "was", "were", "what", "when", "where",
+    "which", "who", "why", "with",
+}
+
+
+def search_terms(text: str) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if token not in STOP_WORDS
+    }
+
 
 # Step 5: Retrieve relevant PDF content
 def retrieve_context(state: AssistantState):
-    question_words = set(
-        state["question"].lower().split()
-    )
+    question_terms = search_terms(state["question"])
+    if "phone" in question_terms or "mobile" in question_terms:
+        question_terms.add("contact")
 
     scored_chunks = []
 
     for document in state["chunks"]:
-        words = set(document.page_content.lower().split())
-        score = len(question_words & words)
+        content = document.page_content
+        words = search_terms(content)
+        score = len(question_terms & words)
+        if state["question"].lower().strip(" ?!.,") in content.lower():
+            score += 2
 
         if score > 0:
             scored_chunks.append(
-                (score, document.page_content)
+                (score, content)
             )
 
     scored_chunks.sort(
@@ -93,7 +113,7 @@ def retrieve_context(state: AssistantState):
     )
 
     if not context:
-        context = "No matching text found in the PDF."
+        context = ""
 
     print("PDF retrieval completed.")
 
@@ -108,6 +128,9 @@ def generate_answer(state: AssistantState):
     question = state["question"]
     context = state["context"]
     chat_history = state.get("chat_history", [])
+
+    if not context:
+        return {"answer": "Information not found in the document."}
 
     if gemini_quota_exhausted:
         return {
